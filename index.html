@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アニ速！アングラアニメまとめ情報局</title>
+<style>
+    /* --- 全体・共通設定 --- */
+    body { margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, sans-serif; background: #000; color: #333; min-height: 100vh; }
+
+    /* === 0. デコイ（ブログ）画面 === */
+    #blog-page { background: #f4f5f7; min-height: 100vh; display: block; color: #333; padding-bottom: 60px; }
+    .blog-header { background: #1a1a2e; color: #fff; padding: 35px 20px; text-align: center; border-bottom: 5px solid #e94560; }
+    .blog-header h1 { margin: 0; font-size: 28px; letter-spacing: 1px; }
+    .blog-header p { margin: 10px 0 0; font-size: 14px; color: #a0a0b0; }
+    .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; display: flex; gap: 30px; box-sizing: border-box; }
+    .main-content { flex: 1; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .sidebar { width: 300px; display: flex; flex-direction: column; gap: 20px; }
+    .ad-box { background: #fff; border: 2px dashed #ccc; padding: 25px 20px; text-align: center; font-size: 14px; color: #666; border-radius: 8px; line-height: 1.6; }
+    .ad-box span { display: block; font-weight: bold; color: #d00; margin-bottom: 8px; font-size: 16px; }
+    .entry-title { font-size: 26px; color: #111; border-left: 6px solid #e94560; padding-left: 15px; margin-top: 0; margin-bottom: 30px; line-height: 1.4; }
+    .entry-text { font-size: 18px; line-height: 2.1; color: #333; }
+    .entry-text p { margin-bottom: 28px; }
+    .btn-container { text-align: center; margin: 50px 0 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    .decoy-btn { background: linear-gradient(135deg, #00b4db, #0083b0); color: #fff; border: none; padding: 22px 45px; font-size: 22px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 20px rgba(0,180,219,0.4); transition: transform 0.2s; }
+    .decoy-btn:hover { transform: scale(1.03); }
+
+    /* === 0.5. ロード中画面 === */
+    #loading-page { background: #ffffff; display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: fixed; top: 0; left: 0; width: 100%; z-index: 7777; }
+    .spinner { width: 60px; height: 60px; border: 6px solid #e0e0e0; border-top: 6px solid #0083b0; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .loading-text { margin-top: 25px; font-size: 18px; color: #555; font-weight: bold; letter-spacing: 1px; }
+    .loading-subtext { margin-top: 8px; font-size: 13px; color: #888; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* === 1. 警告画面（背景点滅アニメーション追加） === */
+    #alert-page { 
+        color: #333; 
+        display: none; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        height: 100vh; 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        z-index: 8888; 
+        animation: flash-bg 0.4s infinite alternate; /* 背景色点滅（くすんだ赤 ⇔ 白） */
+    }
+    @keyframes flash-bg {
+        0% { background-color: #ffffff; }
+        100% { background-color: #8b1e1e; } /* ややくすんだ暗めの赤 */
+    }
+
+    .warning-header { width: 100%; background: #900; color: #fff; text-align: center; padding: 15px; font-weight: bold; position: fixed; top: 0; font-size: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    .content-box { text-align: center; max-width: 800px; padding: 30px; background: rgba(255, 255, 255, 0.92); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .danger-mark { font-size: 80px; color: #c00; margin: 10px 0 10px 0; animation: blink 0.8s infinite; }
+    .critical-text { color: #d00; font-weight: bold; font-size: 24px; }
+    #countdown-wrapper { font-size: 18px; margin: 20px 0; color: #111; }
+    #countdown { font-size: 50px; color: #d00; font-family: monospace; font-weight: bold; }
+    .dl-btn { background: #d00; color: #fff; border: none; padding: 18px 35px; font-size: 20px; border-radius: 6px; cursor: pointer; transition: background 0.2s; margin-top: 15px; font-weight: bold; box-shadow: 0 4px 10px rgba(220,0,0,0.4); }
+    .dl-btn:hover { background: #900; }
+
+    /* === 2. 暗転＆コード画面 === */
+    #hack-page { background: #000; color: #0f0; display: none; flex-direction: column; height: 100vh; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; font-family: monospace; padding: 15px; box-sizing: border-box; overflow: hidden; }
+    #console-log { font-size: 14px; line-height: 1.3; white-space: pre-wrap; word-break: break-all; height: 100%; overflow-y: auto; }
+    .error-log { color: #f00; font-weight: bold; }
+    .dokkiri-log { color: #0f0; font-weight: bold; font-size: 18px; }
+
+    /* === 3. ネタばらし画面 === */
+    #prank-page { background: #e6ffe6; color: #030; display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; padding: 20px; z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; box-sizing: border-box; }
+    .prank-mark { font-size: 80px; }
+    .prank-text { font-size: 36px; font-weight: bold; color: #060; margin: 10px 0; }
+    .prank-sub { font-size: 16px; color: #030; line-height: 1.6; }
+
+    /* === アニメーション・スマホ対応 === */
+    @keyframes blink { 50% { opacity: 0; } }
+    @media (max-width: 768px) {
+        .container { flex-direction: column; }
+        .sidebar { width: 100%; }
+        .main-content { padding: 20px; }
+        .entry-title { font-size: 22px; }
+        .entry-text { font-size: 16px; }
+        .decoy-btn { font-size: 18px; padding: 18px 30px; }
+        .content-box { width: 85%; padding: 20px; }
+    }
+</style>
+</head>
+<body>
+
+<!-- === 0. デコイ（ブログ）画面 === -->
+<div id="blog-page">
+    <div class="blog-header">
+        <h1>アニ速！アングラアニメまとめ情報局</h1>
+        <p>無料でアニメを見倒す最新テクニック＆裏ルート徹底解説</p>
+    </div>
+    <div class="container">
+        <div class="main-content">
+            <h2 class="entry-title">アニメ無料で全話見放題！絶対に困らない配信サービス紹介</h2>
+            <div class="entry-text">
+                <p>「最近どうしても観たい過去アニメがあるのに、どの主要サブスクでも配信終了していて見られない…」「月額料金を払わずに、今すぐ全話を高画質でフル視聴できる環境はないのか？」とお悩みではありませんか？</p>
+                <p>動画配信サービスが乱立する昨今、公式の配信期限切れや利権の関係で、一度見逃すと二度と観づらくなる作品が増加しています。今回は、そうした難民のために国内・海外の非公式視聴ルートおよび最新の無料視聴システムを徹底調査しました。</p>
+                <p>海外ミラーサーバーを経由して登録不要・完全無料でフルHD再生が可能な各種サービスの構造と、安全にアクセスするための専用プロキシ設定について詳しくまとめています。余計な広告ポップアップを自動ブロックしながら、途切れることなくストリーミングを楽しむための準備はわずか3分で完了します。</p>
+                <p>快適な視聴環境を構築するための手順と、現在稼働している最新の視聴URL一覧は以下のリンク先にて公開しています。※アクセス集中によりサーバーが混み合う場合がありますので、お早めにご確認ください。</p>
+            </div>
+            <div class="btn-container">
+                <button class="decoy-btn" onclick="startPrankFromBlog()">【使い方とURLはこちら】</button>
+            </div>
+        </div>
+        <div class="sidebar">
+            <div class="ad-box"><span>[PR] 爆速DLツール</span>動画を1秒で保存！無制限ダウンロードソフト（無料体験版）</div>
+            <div class="ad-box"><span>[PR] スマホ爆速化</span>キャッシュを一括削除して動作を10倍軽くするアプリ</div>
+            <div class="ad-box"><span>[PR] 匿名VPN接続</span>閲覧履歴を完全隠蔽！セキュリティ強化ツール</div>
+        </div>
+    </div>
+</div>
+
+<!-- === 0.5. ロード中画面 === -->
+<div id="loading-page">
+    <div class="spinner"></div>
+    <div class="loading-text">外部サーバーへ接続中...</div>
+    <div class="loading-subtext">安全なプロキシを経由してコンテンツを取得しています</div>
+</div>
+
+<!-- === 1. 警告画面 === -->
+<div id="alert-page">
+    <div class="warning-header">⚠️ SECURITY ALERT</div>
+    <div class="content-box">
+        <div class="danger-mark">⚠️</div>
+        <p class="critical-text">【緊急】システム脅威が検出されました</p>
+        <div id="countdown-wrapper">
+            残り <span id="countdown">13.00</span> 秒で<br>
+            すべてのファイルがウイルスに感染します。
+        </div>
+        <button class="dl-btn" onclick="pressDownload()">ウイルスバスターをダウンロードする</button>
+    </div>
+</div>
+
+<!-- === 2. 暗転＆コード画面 === -->
+<div id="hack-page">
+    <div id="console-log"></div>
+</div>
+
+<!-- === 3. ネタばらし画面 === -->
+<div id="prank-page">
+    <div class="prank-mark">🎉</div>
+    <p class="prank-text">ドッキリでした！！</p>
+    <p class="prank-sub">安心してください、スマホやパソコンには何も起きていません。<br>ただのWebページです。(^-^)</p>
+    <button class="dl-btn" style="background: #090; margin-top: 30px;" onclick="window.location.reload()">最初から試す</button>
+</div>
+
+<script>
+    var currentCount = 13.00;
+    var timerInterval = null;
+    var beepInterval = null;
+    var isPrankFinished = false;
+
+    var blogPage = document.getElementById('blog-page');
+    var loadingPage = document.getElementById('loading-page');
+    var alertPage = document.getElementById('alert-page');
+    var hackPage = document.getElementById('hack-page');
+    var prankPage = document.getElementById('prank-page');
+    var consoleElement = document.getElementById('console-log');
+    var countdownElement = document.getElementById('countdown');
+
+    var audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // ビープ音再生（Web Audio API）
+    function playBeep(freq, duration, type) {
+        try {
+            initAudio();
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = type || 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {}
+    }
+
+    // 警告画面での高頻度ビープ音演出（ピピピピッ！）
+    function startHighFrequencyBeeps() {
+        function scheduleNextBeep() {
+            if (isPrankFinished || currentCount <= 0) return;
+            
+            // 短い電子音を高頻度で鳴らす（80〜250ミリ秒間隔）
+            playBeep(900 + Math.random() * 300, 0.04, 'square');
+            var nextInterval = 80 + Math.random() * 170; 
+            beepInterval = setTimeout(scheduleNextBeep, nextInterval);
+        }
+        scheduleNextBeep();
+    }
+
+    // 暗転時の重い警戒音（ブーーッ）
+    function playDarknessBeep() {
+        playBeep(250, 1.8, 'sawtooth');
+    }
+
+    // === ブログのボタンを押した時に起動（3秒ロード挟み） ===
+    function startPrankFromBlog() {
+        initAudio();
+        blogPage.style.display = 'none';
+        loadingPage.style.display = 'flex';
+
+        // 3秒後に警告画面へ遷移
+        setTimeout(function() {
+            loadingPage.style.display = 'none';
+            alertPage.style.display = 'flex';
+            startCountdown();
+        }, 3000);
+    }
+
+    // === カウントダウン開始 ===
+    function startCountdown() {
+        timerInterval = setInterval(function() {
+            if (isPrankFinished) return;
+
+            currentCount -= 0.01;
+            countdownElement.textContent = currentCount.toFixed(2);
+
+            if (currentCount <= 0.00) {
+                clearInterval(timerInterval);
+                clearTimeout(beepInterval);
+                countdownElement.textContent = "0.00";
+                
+                // 13秒経過 ➔ 4秒暗転（無音）➔ コード演出へ
+                triggerBlackout(4000, false, startHackSequence);
+            }
+        }, 10);
+
+        startHighFrequencyBeeps();
+    }
+
+    // === DLボタン押下時 ===
+    function pressDownload() {
+        if (isPrankFinished) return;
+        isPrankFinished = true;
+        clearInterval(timerInterval);
+        clearTimeout(beepInterval);
+        
+        // ボタン押下 ➔ 4秒暗転（ビープ音あり） ➔ ネタばらし
+        triggerBlackout(4000, true, function() {
+            prankPage.style.display = 'flex';
+        });
+    }
+
+    // === 共通：暗転処理 ===
+    function triggerBlackout(duration, playSound, nextStepCallback) {
+        alertPage.style.display = 'none';
+        hackPage.style.display = 'none';
+        prankPage.style.display = 'none';
+
+        if (playSound) {
+            playDarknessBeep();
+        }
+
+        setTimeout(nextStepCallback, duration);
+    }
+
+    // === コード流動演出 ===
+    function startHackSequence() {
+        hackPage.style.display = 'flex';
+
+        var step = 0;
+        var maxSteps = 35;
+
+        function appendCodeLines() {
+            if (step < maxSteps) {
+                var randomHex = (Math.random() * 0xffffff << 0).toString(16).toUpperCase();
+                var line = "";
+                
+                if (Math.random() < 0.25) {
+                    line = '<span class="error-log">[CRITICAL ERROR]: MEMORY_CORRUPTED_AT_0x' + randomHex + '</span>\n';
+                } else {
+                    line = '> EXECUTING_SYSTEM_OVERRIDE_0x' + randomHex + ' -- ACCESS_GRANTED\n';
+                }
+                
+                consoleElement.innerHTML += line;
+                consoleElement.scrollTop = consoleElement.scrollHeight;
+                step++;
+                setTimeout(appendCodeLines, 40);
+            } else {
+                setTimeout(typeDokkiriText, 500);
+            }
+        }
+        appendCodeLines();
+    }
+
+    // === DOKKIRI DAISEIKOU タイピング演出 ===
+    function typeDokkiriText() {
+        var text = "\n> STATUS: DOKKIRI DAISEIKOU\n";
+        var index = 0;
+
+        var dokkiriSpan = document.createElement("span");
+        dokkiriSpan.className = "dokkiri-log";
+        consoleElement.appendChild(dokkiriSpan);
+
+        function typeChar() {
+            if (index < text.length) {
+                dokkiriSpan.textContent += text.charAt(index);
+                consoleElement.scrollTop = consoleElement.scrollHeight;
+                playBeep(1100, 0.03, 'sine');
+                index++;
+                setTimeout(typeChar, 120);
+            } else {
+                // 打つの完了後 ➔ 3秒停止 ➔ 2回目の4秒暗転（ビープ音あり） ➔ ネタばらし
+                setTimeout(function() {
+                    isPrankFinished = true;
+                    triggerBlackout(4000, true, function() {
+                        prankPage.style.display = 'flex';
+                    });
+                }, 3000);
+            }
+        }
+        typeChar();
+    }
+</script>
+
+</body>
+</html>
